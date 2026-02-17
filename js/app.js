@@ -4,7 +4,7 @@ const GV = {
   },
   set(key, value){ localStorage.setItem(key, JSON.stringify(value)); },
   clear(){
-    ["city","club","zone","seats","date","time","people","package","pay","busySeatsByZone"].forEach(k=>localStorage.removeItem(k));
+  ["city","club","zone","seats","date","time","people","package","pay","busySeatsByZone","bookedSeats"].forEach(k=>localStorage.removeItem(k));
   }
 };
 
@@ -21,16 +21,17 @@ function injectSponsorFooter(){
     <div class="site-footer-inner">
       <div>© ${new Date().getFullYear()} VISION • Partner brands</div>
       <div class="sponsors">
-        <span class="sponsor">Logitech G</span>
-        <span class="sponsor">HyperX</span>
-        <span class="sponsor">Lenovo</span>
-        <span class="sponsor">Razer</span>
-        <span class="sponsor">SteelSeries</span>
+        <a class="sponsor" href="https://www.logitechg.com/" target="_blank" rel="noopener noreferrer">Logitech G</a>
+        <a class="sponsor" href="https://hyperx.com/" target="_blank" rel="noopener noreferrer">HyperX</a>
+        <a class="sponsor" href="https://www.lenovo.com/" target="_blank" rel="noopener noreferrer">Lenovo</a>
+        <a class="sponsor" href="https://www.razer.com/" target="_blank" rel="noopener noreferrer">Razer</a>
+        <a class="sponsor" href="https://steelseries.com/" target="_blank" rel="noopener noreferrer">SteelSeries</a>
       </div>
     </div>
   `;
   document.body.appendChild(footer);
 }
+
 
 function initCustomSelect(root){
   const btn = root.querySelector(".cselect-btn");
