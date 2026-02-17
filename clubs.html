@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Выбор клуба - VISION</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <a class="brand" href="index.html" aria-label="VISION">
+        <img class="brand-logo" src="img/vision.png" alt="VISION">
+      </a>
+      <span id="cityBadge" class="badge"></span>
+    </div>
+
+    <div class="card pad">
+      <div class="h1">Выберите компьютерный клуб</div>
+      <p class="p">Список клубов в выбранном городе.</p>
+      <hr class="sep">
+
+      <div class="row">
+        <div class="field">
+          <label>Поиск</label>
+          <input id="search" placeholder="Например: COLIZEUM">
+        </div>
+      </div>
+
+      <div id="list" class="list" style="margin-top:12px"></div>
+    </div>
+  </div>
+
+  <script src="js/app.js"></script>
+  <script>
+    injectSponsorFooter();
+
+    const city = GV.get("city");
+    if(!city) goto("index.html");
+    qs("#cityBadge").textContent = "Город: " + city;
+
+    const clubsByCity = {
+      "Алматы": [
+        { id:"al-1", name:"Cyber Arena", price:1000, rating:4.8 },
+        { id:"al-2", name:"COLIZEUM", price:1200, rating:4.7 },
+        { id:"al-3", name:"GG Arena", price:900, rating:4.6 },
+        { id:"al-4", name:"Level Up", price:950, rating:4.5 }
+      ],
+      "Астана": [
+        { id:"as-1", name:"Cyber Arena Astana", price:1000, rating:4.7 },
+        { id:"as-2", name:"COLIZEUM Astana", price:1200, rating:4.6 },
+        { id:"as-3", name:"GG Arena Astana", price:900, rating:4.5 }
+      ]
+    };
+
+    const data = clubsByCity[city] ?? [];
+    const list = qs("#list");
+    const search = qs("#search");
+
+    function render(filter=""){
+      list.innerHTML = "";
+      const f = filter.trim().toLowerCase();
+      const items = data.filter(c => !f || c.name.toLowerCase().includes(f));
+
+      if(!items.length){
+        list.innerHTML = `<div class="card pad" style="background:rgba(0,0,0,.18)">Ничего не найдено.</div>`;
+        return;
+      }
+
+      items.forEach(c=>{
+        const el = document.createElement("div");
+        el.className = "club";
+        el.innerHTML = `
+          <div class="thumb">${c.name.split(" ").slice(0,2).map(s=>s[0]).join("").toUpperCase()}</div>
+          <div class="meta">
+            <div class="name">${c.name}</div>
+            <div class="kpis">
+              <span class="pill">⭐ ${c.rating}</span>
+              <span class="pill">от ${fmtKZT(c.price)}/час</span>
+              <span class="pill">онлайн бронь</span>
+            </div>
+          </div>
+          <button class="btn primary">Выбрать</button>
+        `;
+        el.querySelector("button").addEventListener("click", ()=>{
+          GV.set("club", c);
+          GV.set("zone", null);
+          GV.set("seats", []);
+          GV.set("package", null);
+          GV.set("pay", null);
+          GV.set("busySeatsByZone", null);
+          goto("booking.html");
+        });
+        list.appendChild(el);
+      });
+    }
+
+    render();
+    search.addEventListener("input", ()=>render(search.value));
+  </script>
+</body>
+</html>

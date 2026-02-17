@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Добро Пожаловать в VISION</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="brand">
+        <img class="brand-logo" src="img/vision.png" alt="VISION">
+      </div>
+      <span class="badge">Бронь ПК без звонков</span>
+    </div>
+
+    <div class="card pad">
+      <div class="h1">Выберите город</div>
+      <p class="p">Алматы и Астана (пока). Дальше — выбор клуба.</p>
+      <hr class="sep">
+
+      <div class="row">
+        <div class="field">
+          <label>Город</label>
+            <div class="cselect" id="citySelect">
+              <button class="cselect-btn" type="button">
+                <span class="cselect-label" data-placeholder="Выберите…">Выберите…</span>
+                <span class="cselect-arrow"></span>
+              </button>
+
+              <input type="hidden" id="city" value="">
+
+              <div class="cselect-menu">
+                <div class="cselect-item cselect-muted" data-value="">Выберите…</div>
+                <div class="cselect-item" data-value="Алматы">Алматы</div>
+                <div class="cselect-item" data-value="Астана">Астана</div>
+              </div>
+            </div>
+          <small class="help">Выбор сохранится автоматически.</small>
+        </div>
+      </div>
+
+      <div class="row" style="margin-top:12px">
+        <button id="next" class="btn primary" disabled>Дальше →</button>
+        <button id="reset" class="btn ghost">Сбросить</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/app.js"></script>
+  <script>
+    injectSponsorFooter();
+
+    const next = qs("#next");
+    const reset = qs("#reset");
+
+    const saved = GV.get("city", "");
+    qs("#city").value = saved;
+
+    const cs = initCustomSelect(qs("#citySelect"));
+    if(saved){
+      cs.setValue(saved, saved);
+      next.disabled = false;
+    }
+
+    qs("#citySelect").addEventListener("change", (e)=>{
+      const val = qs("#city").value;
+      GV.set("city", val);
+      next.disabled = !val;
+    });
+
+    next.addEventListener("click", ()=>goto("clubs.html"));
+    reset.addEventListener("click", ()=>{ GV.clear(); location.reload(); });
+  </script>
+</body>
+</html>

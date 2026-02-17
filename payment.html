@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Оплата - VISION</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <a class="brand" href="packages.html" aria-label="VISION">
+        <img class="brand-logo" src="img/vision.png" alt="VISION">
+      </a>
+      <span id="badge" class="badge"></span>
+    </div>
+
+    <div class="card pad">
+      <div class="h1">Оплата</div>
+      <p class="p">Выберите способ оплаты. Бронь создаётся сразу.</p>
+      <hr class="sep">
+
+      <div class="grid cols-2">
+        <div class="choice" id="kaspi">
+          <h3>Kaspi (удалённо)</h3>
+          <p>Быстрое подтверждение брони</p>
+          <div class="kpis" style="margin-top:10px">
+            <span class="pill">QR / перевод</span>
+            <span class="pill">мгновенно</span>
+          </div>
+        </div>
+
+        <div class="choice" id="onsite">
+          <h3>Оплата в клубе</h3>
+          <p>Бронь держится 15 минут</p>
+          <div class="kpis" style="margin-top:10px">
+            <span class="pill">⏳ 15 минут</span>
+            <span class="pill">у администратора</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card pad" style="background:rgba(0,0,0,.18); margin-top:14px">
+        <div class="row" style="justify-content:space-between">
+          <div>
+            <div style="font-weight:900">Детали брони</div>
+            <div style="color:var(--muted); font-size:12px" id="details"></div>
+          </div>
+          <div class="pill" id="totalPill">Итого: —</div>
+        </div>
+      </div>
+
+      <div class="actionbar">
+        <div class="summary">
+          <div class="top" id="sumTop">Выберите способ оплаты</div>
+          <div class="sub" id="sumSub">—</div>
+        </div>
+        <div class="row">
+          <a class="btn ghost" href="packages.html">← Назад</a>
+          <button id="finish" class="btn primary" disabled>Подтвердить →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/app.js"></script>
+  <script>
+    injectSponsorFooter();
+
+    const city = GV.get("city");
+    const club = GV.get("club");
+    const zone = GV.get("zone");
+    const seats = GV.get("seats", []);
+    const date = GV.get("date");
+    const time = GV.get("time");
+    const people = GV.get("people");
+    const pack = GV.get("package");
+
+    if(!city) goto("index.html");
+    if(!club) goto("clubs.html");
+    if(!zone || !seats.length) goto("booking.html");
+    if(!pack) goto("packages.html");
+
+    qs("#badge").textContent = `${city} • ${club.name}`;
+    qs("#details").textContent = `${zone} • мест: ${seats.length} • ${date} • ${time} • людей: ${people} • пакет: ${pack.title}`;
+
+    const total = pack.price * seats.length;
+    qs("#totalPill").textContent = `Итого: ${fmtKZT(total)}`;
+
+    let pay = GV.get("pay", null);
+
+    function pick(type){
+      pay = type;
+      GV.set("pay", type);
+
+      qs("#kaspi").classList.toggle("active", type==="kaspi");
+      qs("#onsite").classList.toggle("active", type==="onsite");
+
+      qs("#sumTop").textContent = `Итого: ${fmtKZT(total)}`;
+      qs("#sumSub").textContent = (type==="kaspi") ? "Kaspi удалённо" : "Оплата в клубе";
+      qs("#finish").disabled = false;
+    }
+
+    qs("#kaspi").addEventListener("click", ()=>pick("kaspi"));
+    qs("#onsite").addEventListener("click", ()=>pick("onsite"));
+
+    if(pay) pick(pay);
+
+    qs("#finish").addEventListener("click", ()=>goto("success.html"));
+  </script>
+</body>
+</html>

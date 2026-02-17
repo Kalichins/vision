@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Готово - VISION</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <a class="brand" href="index.html" aria-label="VISION">
+        <img class="brand-logo" src="img/vision.png" alt="VISION">
+      </a>
+      <span class="badge">Бронь создана</span>
+    </div>
+
+    <div class="card pad">
+      <div class="h1">✅ Успешно!</div>
+      <p class="p" id="info"></p>
+      <hr class="sep">
+
+      <div class="card pad" style="background:rgba(0,0,0,.18)">
+        <div style="font-weight:900; margin-bottom:10px">Детали</div>
+        <div class="kpis" id="kpis"></div>
+      </div>
+
+      <div class="row" style="margin-top:14px">
+        <a class="btn primary" href="index.html">На главную</a>
+        <button class="btn ghost" id="reset">Сбросить</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/app.js"></script>
+  <script>
+    injectSponsorFooter();
+
+    const city = GV.get("city");
+    const club = GV.get("club");
+    const zone = GV.get("zone");
+    const seats = GV.get("seats", []);
+    const date = GV.get("date");
+    const time = GV.get("time");
+    const people = GV.get("people");
+    const pack = GV.get("package");
+    const pay = GV.get("pay");
+
+    if(!city || !club || !zone || !seats.length || !date || !time || !pack || !pay){
+      goto("index.html");
+    }
+
+    const code = "VS-" + Math.random().toString(16).slice(2,8).toUpperCase();
+    qs("#info").textContent = `Бронь подтверждена. Код брони: ${code}`;
+
+    const zonePrefix = zone === "Общий зал" ? "G" : zone === "VIP" ? "V" : "B";
+    const seatNames = seats.map(n => `${zonePrefix}-${String(n).padStart(2,"0")}`).join(", ");
+
+    const total = pack.price * seats.length;
+
+    const items = [
+      ["Город", city],
+      ["Клуб", club.name],
+      ["Зона", zone],
+      ["Места", seatNames],
+      ["Дата/время", `${date} • ${time}`],
+      ["Людей", people],
+      ["Пакет", pack.title],
+      ["Оплата", pay === "kaspi" ? "Kaspi (удалённо)" : "В клубе"],
+      ["Итого", fmtKZT(total)]
+    ];
+
+    qs("#kpis").innerHTML = items.map(([a,b]) =>
+      `<span class="pill"><b style="color:#fff">${a}:</b> ${b}</span>`
+    ).join(" ");
+
+    qs("#reset").addEventListener("click", ()=>{
+      GV.clear();
+      goto("index.html");
+    });
+  </script>
+</body>
+</html>

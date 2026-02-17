@@ -1,0 +1,411 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>VISION — выбор места</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <a class="brand" href="index.html" aria-label="VISION">
+        <img class="brand-logo" src="img/vision.png" alt="VISION">
+      </a>
+      <span id="clubBadge" class="badge"></span>
+    </div>
+
+    <div class="card pad">
+      <div class="h1">Выбор места</div>
+      <p class="p">Зона → места → дата/время → люди.</p>
+      <hr class="sep">
+
+      <div class="grid cols-2">
+        <!-- LEFT -->
+        <div class="card pad" style="background:rgba(0,0,0,.18)">
+          <div style="font-weight:900; margin-bottom:8px">Зона</div>
+
+          <div class="segment" id="zones">
+            <div class="choice" data-zone="Общий зал">
+              <h3>Общий зал</h3>
+              <p>Больше мест, оптимальный прайс</p>
+              <div class="specs">
+                <div><span>ПК:</span> i5 / Ryzen 5, RTX 2060–3060</div>
+                <div><span>Монитор:</span> 144Hz, 24"</div>
+                <div><span>Периферия:</span> стандарт (Logitech/HyperX)</div>
+              </div>
+            </div>
+
+            <div class="choice" data-zone="VIP">
+              <h3>VIP</h3>
+              <p>Комфорт + мощнее железо</p>
+              <div class="specs">
+                <div><span>ПК:</span> i7 / Ryzen 7, RTX 3070–4070</div>
+                <div><span>Монитор:</span> 240Hz, 24–27"</div>
+                <div><span>Периферия:</span> премиум, кресла лучше</div>
+              </div>
+            </div>
+
+            <div class="choice" data-zone="Bootcamp">
+              <h3>Bootcamp</h3>
+              <p>Комната для команды (сквад)</p>
+              <div class="specs">
+                <div><span>ПК:</span> i7/i9, RTX 4070–4080</div>
+                <div><span>Монитор:</span> 240Hz+</div>
+                <div><span>Фишки:</span> тише, приватность, командный вайб</div>
+              </div>
+            </div>
+          </div>
+
+          <hr class="sep">
+
+          <div class="row" style="justify-content:space-between; margin-bottom:10px">
+            <div class="row" style="gap:10px">
+              <span class="pill">🟢 свободно</span>
+              <span class="pill" style="border-color:rgba(239,68,68,.55); color:#fca5a5">🔴 занято</span>
+              <span class="pill" style="border-color:rgba(124,58,237,.8); color:#c4b5fd">🟣 выбрано</span>
+            </div>
+            <button id="clearSeats" class="btn ghost">Снять выбор</button>
+          </div>
+
+          <div id="seats" class="seats"></div>
+        </div>
+
+        <!-- RIGHT -->
+        <div class="card pad" style="background:rgba(0,0,0,.18)">
+          <div style="font-weight:900; margin-bottom:8px">Дата, время, люди</div>
+
+          <div class="calendar">
+            <div class="cal-header">
+              <button class="cal-nav" id="prevMonth">‹</button>
+              <div class="cal-title" id="calTitle"></div>
+              <button class="cal-nav" id="nextMonth">›</button>
+            </div>
+
+            <div class="cal-days">
+              <div>Пн</div><div>Вт</div><div>Ср</div>
+              <div>Чт</div><div>Пт</div><div>Сб</div><div>Вс</div>
+            </div>
+
+            <div class="cal-grid" id="calendar"></div>
+          </div>
+
+          <!-- TIME: custom select -->
+          <div class="row" style="margin-top:12px">
+            <div class="field">
+              <label>Время начала</label>
+
+              <div class="cselect" id="timeCS">
+                <button class="cselect-btn" type="button">
+                  <span class="cselect-label" data-placeholder="Выберите время…">Выберите время…</span>
+                  <span class="cselect-arrow"></span>
+                </button>
+                <input type="hidden" id="timeValue" value="">
+                <div class="cselect-menu" id="timeMenu"></div>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- PEOPLE: custom select -->
+          <div class="row">
+            <div class="field">
+              <label>Количество людей</label>
+
+              <div class="cselect" id="peopleCS">
+                <button class="cselect-btn" type="button">
+                  <span class="cselect-label" data-placeholder="Выберите…">Выберите…</span>
+                  <span class="cselect-arrow"></span>
+                </button>
+                <input type="hidden" id="peopleValue" value="">
+                <div class="cselect-menu">
+                  <div class="cselect-item" data-value="1">1</div>
+                  <div class="cselect-item" data-value="2">2</div>
+                  <div class="cselect-item" data-value="3">3</div>
+                  <div class="cselect-item" data-value="4">4</div>
+                  <div class="cselect-item" data-value="5">5</div>
+                </div>
+              </div>
+
+              <small class="help">Позже можно ограничить выбор мест по людям.</small>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="actionbar">
+        <div class="summary">
+          <div class="top" id="sumTop">Ничего не выбрано</div>
+          <div class="sub" id="sumSub">Выберите зону и места</div>
+        </div>
+        <div class="row">
+          <a class="btn ghost" href="clubs.html">← Назад</a>
+          <button id="next" class="btn primary" disabled>Выбрать пакет →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/app.js"></script>
+  <script>
+    injectSponsorFooter();
+
+    const city = GV.get("city");
+    const club = GV.get("club");
+    if(!city) goto("index.html");
+    if(!club) goto("clubs.html");
+    qs("#clubBadge").textContent = `${city} • ${club.name}`;
+
+    // ------ ZONE CONFIG (разные места) ------
+    const ZONE_CONF = {
+      "Общий зал": { prefix:"G", count:24 },
+      "VIP": { prefix:"V", count:8 },
+      "Bootcamp": { prefix:"B", count:8 }
+    };
+
+    // ------ Zone ------
+    let zone = GV.get("zone", null);
+    function setZone(z){
+      zone = z;
+      GV.set("zone", z);
+      qsa("#zones .choice").forEach(x => x.classList.toggle("active", x.dataset.zone === z));
+      // при смене зоны — сброс выбранных мест
+      GV.set("seats", []);
+      selected = new Set();
+      renderSeats();
+      updateSummary();
+    }
+    qs("#zones").addEventListener("click", (e)=>{
+      const card = e.target.closest(".choice");
+      if(card) setZone(card.dataset.zone);
+    });
+    if(zone) setZone(zone);
+
+    // ------ Custom selects init ------
+    const peopleHidden = qs("#peopleValue");
+    const timeHidden = qs("#timeValue");
+
+    // saved values
+    const savedPeople = GV.get("people", "1");
+    peopleHidden.value = savedPeople;
+
+    const savedTime = GV.get("time", "18:00");
+
+    // init people custom select
+    const peopleCS = initCustomSelect(qs("#peopleCS"));
+    peopleCS.setValue(savedPeople, savedPeople);
+
+    qs("#peopleCS").addEventListener("change", ()=>{
+      GV.set("people", peopleHidden.value);
+      updateSummary();
+    });
+
+    // build time options (step 30 min)
+    function roundToStep(timeStr, step=30){
+      const [h,m] = timeStr.split(":").map(Number);
+      const total = h*60+m;
+      const rounded = Math.round(total/step)*step;
+      const hh = String(Math.floor(rounded/60)).padStart(2,"0");
+      const mm = String(rounded%60).padStart(2,"0");
+      return `${hh}:${mm}`;
+    }
+
+    function fillTimeMenu(stepMinutes=30, start="10:00", end="23:00"){
+      const menu = qs("#timeMenu");
+      menu.innerHTML = "";
+
+      const [sh, sm] = start.split(":").map(Number);
+      const [eh, em] = end.split(":").map(Number);
+      let t = sh*60 + sm;
+      const endT = eh*60 + em;
+
+      while(t <= endT){
+        const hh = String(Math.floor(t/60)).padStart(2,"0");
+        const mm = String(t%60).padStart(2,"0");
+        const v = `${hh}:${mm}`;
+        const item = document.createElement("div");
+        item.className = "cselect-item";
+        item.dataset.value = v;
+        item.textContent = v;
+        menu.appendChild(item);
+        t += stepMinutes;
+      }
+    }
+
+    fillTimeMenu(30, "10:00", "23:00");
+
+    // set default time (rounded)
+    const t0 = roundToStep(savedTime, 30);
+    timeHidden.value = t0;
+    GV.set("time", t0);
+
+    // init time custom select AFTER menu filled
+    const timeCS = initCustomSelect(qs("#timeCS"));
+    timeCS.setValue(t0, t0);
+
+    qs("#timeCS").addEventListener("change", ()=>{
+      GV.set("time", timeHidden.value);
+      updateSummary();
+    });
+
+    // ------ Seats (по зоне разные) ------
+    const seatsWrap = qs("#seats");
+
+    // busy seats per zone stored by club
+    let busyByZone = GV.get("busySeatsByZone", null);
+    if(!busyByZone){
+      busyByZone = {};
+      Object.keys(ZONE_CONF).forEach(z=>{
+        const {count} = ZONE_CONF[z];
+        const seed = (club.id.length + club.name.length + z.length);
+        const busy = [];
+        for(let i=1;i<=count;i++){
+          if((i*seed)%7===0 || (i*seed)%11===0) busy.push(i);
+        }
+        busyByZone[z] = busy;
+      });
+      GV.set("busySeatsByZone", busyByZone);
+    }
+
+    let selected = new Set(GV.get("seats", []));
+
+    function seatLabel(i){
+      const {prefix} = ZONE_CONF[zone];
+      return `${prefix}-${String(i).padStart(2,"0")}`;
+    }
+
+    function renderSeats(){
+      seatsWrap.innerHTML = "";
+      if(!zone){
+        for(let i=1;i<=12;i++){
+          const el = document.createElement("div");
+          el.className = "seat";
+          el.style.opacity = ".35";
+          el.textContent = "—";
+          seatsWrap.appendChild(el);
+        }
+        return;
+      }
+
+      const {count} = ZONE_CONF[zone];
+      const busy = new Set(busyByZone[zone] || []);
+
+      for(let i=1;i<=count;i++){
+        const isBusy = busy.has(i);
+        const el = document.createElement("div");
+        el.className = "seat" + (isBusy ? " busy" : "") + (selected.has(i) ? " selected" : "");
+        el.textContent = seatLabel(i);
+
+        el.addEventListener("click", ()=>{
+          if(isBusy) return;
+          if(selected.has(i)) selected.delete(i);
+          else selected.add(i);
+
+          GV.set("seats", Array.from(selected));
+          renderSeats();
+          updateSummary();
+        });
+
+        seatsWrap.appendChild(el);
+      }
+    }
+
+    qs("#clearSeats").addEventListener("click", ()=>{
+      selected = new Set();
+      GV.set("seats", []);
+      renderSeats();
+      updateSummary();
+    });
+
+    // ------ Calendar ------
+    const calendarEl = qs("#calendar");
+    const titleEl = qs("#calTitle");
+    let current = new Date();
+
+    let selectedDate = null;
+    const savedDate = GV.get("date", null);
+    if(savedDate){
+      selectedDate = new Date(savedDate + "T00:00:00");
+      current = new Date(selectedDate);
+    } else {
+      const iso = new Date().toISOString().slice(0,10);
+      selectedDate = new Date(iso + "T00:00:00");
+      GV.set("date", iso);
+    }
+
+    function renderCalendar(){
+      calendarEl.innerHTML = "";
+      const year = current.getFullYear();
+      const month = current.getMonth();
+      const firstDay = new Date(year, month, 1);
+      const lastDay = new Date(year, month + 1, 0);
+      const startDay = (firstDay.getDay() + 6) % 7;
+
+      titleEl.textContent = current.toLocaleString("ru-RU", { month:"long", year:"numeric" });
+
+      for(let i=0;i<startDay;i++) calendarEl.appendChild(document.createElement("div"));
+
+      const today = new Date();
+      const todayMid = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+
+      for(let d=1; d<=lastDay.getDate(); d++){
+        const date = new Date(year, month, d);
+        const el = document.createElement("div");
+        el.className = "cal-day";
+        el.textContent = d;
+
+        if(date < todayMid) el.classList.add("disabled");
+        if(selectedDate && date.toDateString() === selectedDate.toDateString()) el.classList.add("selected");
+
+        el.addEventListener("click", ()=>{
+          selectedDate = date;
+          GV.set("date", date.toISOString().slice(0,10));
+          renderCalendar();
+          updateSummary();
+        });
+
+        calendarEl.appendChild(el);
+      }
+    }
+
+    qs("#prevMonth").onclick = ()=>{ current.setMonth(current.getMonth()-1); renderCalendar(); };
+    qs("#nextMonth").onclick = ()=>{ current.setMonth(current.getMonth()+1); renderCalendar(); };
+
+    // ------ Summary ------
+    function updateSummary(){
+      const seatsCount = selected.size;
+      const dateStr = GV.get("date");
+      const when = `${dateStr} • ${timeHidden.value}`;
+      const ppl = peopleHidden.value;
+
+      const top = qs("#sumTop");
+      const sub = qs("#sumSub");
+      const next = qs("#next");
+
+      if(!zone){
+        top.textContent = "Сначала выберите зону";
+        sub.textContent = `Дата/время: ${when} • Людей: ${ppl}`;
+        next.disabled = true;
+        return;
+      }
+
+      if(seatsCount === 0){
+        top.textContent = `Зона: ${zone}`;
+        sub.textContent = `Выберите места • ${when} • Людей: ${ppl}`;
+        next.disabled = true;
+        return;
+      }
+
+      top.textContent = `Зона: ${zone} • Мест: ${seatsCount}`;
+      sub.textContent = `${when} • Людей: ${ppl}`;
+      next.disabled = false;
+    }
+
+    renderSeats();
+    renderCalendar();
+    updateSummary();
+
+    qs("#next").addEventListener("click", ()=>goto("packages.html"));
+  </script>
+</body>
+</html>

@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Пакеты - VISION</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <a class="brand" href="booking.html" aria-label="VISION">
+        <img class="brand-logo" src="img/vision.png" alt="VISION">
+      </a>
+      <span id="badge" class="badge"></span>
+    </div>
+
+    <div class="card pad">
+      <div class="h1">Выберите пакет</div>
+      <p class="p">Пакет применяется ко всем выбранным местам.</p>
+      <hr class="sep">
+
+      <div id="packs" class="grid cols-3"></div>
+
+      <div class="actionbar">
+        <div class="summary">
+          <div class="top" id="sumTop">Выберите пакет</div>
+          <div class="sub" id="sumSub">—</div>
+        </div>
+        <div class="row">
+          <a class="btn ghost" href="booking.html">← Назад</a>
+          <button id="next" class="btn primary" disabled>К оплате →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/app.js"></script>
+  <script>
+    injectSponsorFooter();
+
+    const city = GV.get("city");
+    const club = GV.get("club");
+    const zone = GV.get("zone");
+    const seats = GV.get("seats", []);
+    const date = GV.get("date");
+    const time = GV.get("time");
+
+    if(!city) goto("index.html");
+    if(!club) goto("clubs.html");
+    if(!zone || !seats.length) goto("booking.html");
+
+    qs("#badge").textContent = `${city} • ${club.name} • ${zone} • мест: ${seats.length}`;
+
+    // множители по зонам
+    const zoneMul = zone === "VIP" ? 1.4 : zone === "Bootcamp" ? 1.7 : 1.0;
+    const baseHour = club.price * zoneMul;
+
+    // пакеты (цена за 1 место)
+    const packages = [
+      { id:"p1", title:"1 час", desc:"Стандарт", hours:1, price: baseHour*1 },
+      { id:"p2", title:"2 часа", desc:"Стандарт", hours:2, price: baseHour*2 },
+      { id:"p3", title:"3 часа", desc:"Стандарт", hours:3, price: baseHour*3 },
+      { id:"p4", title:"2+1", desc:"Акция (3 часа по цене 2)", hours:3, price: baseHour*2 },
+      { id:"p5", title:"5+2", desc:"Акция (7 часов по цене 5)", hours:7, price: baseHour*5 },
+      { id:"p6", title:"Ночь", desc:"22:00–08:00", hours:10, price: baseHour*6.5 }
+    ];
+
+    const wrap = qs("#packs");
+    let chosen = GV.get("package", null);
+
+    function render(){
+      wrap.innerHTML = "";
+      packages.forEach(p=>{
+        const el = document.createElement("div");
+        el.className = "choice" + (chosen?.id === p.id ? " active" : "");
+        el.innerHTML = `
+          <h3>${p.title}</h3>
+          <p>${p.desc}</p>
+          <div class="kpis" style="margin-top:10px">
+            <span class="pill">за место: ${fmtKZT(p.price)}</span>
+            <span class="pill">длительность: ${p.hours} ч</span>
+          </div>
+        `;
+        el.addEventListener("click", ()=>{
+          chosen = p;
+          GV.set("package", p);
+          render();
+          updateSummary();
+        });
+        wrap.appendChild(el);
+      });
+    }
+
+    function updateSummary(){
+      const next = qs("#next");
+
+      if(!chosen){
+        qs("#sumTop").textContent = "Выберите пакет";
+        qs("#sumSub").textContent = `Мест: ${seats.length} • ${date} • ${time}`;
+        next.disabled = true;
+        return;
+      }
+
+      const total = chosen.price * seats.length;
+      qs("#sumTop").textContent = `${chosen.title} • мест: ${seats.length}`;
+      qs("#sumSub").textContent = `Итого: ${fmtKZT(total)} • ${date} • ${time}`;
+      next.disabled = false;
+    }
+
+    render();
+    updateSummary();
+
+    qs("#next").addEventListener("click", ()=>goto("payment.html"));
+  </script>
+</body>
+</html>
