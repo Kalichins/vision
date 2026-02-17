@@ -105,6 +105,7 @@
                 <div class="cselect-menu" id="timeMenu"></div>
               </div>
 
+              <small class="help">Шаг 30 минут, без ручного ввода.</small>
             </div>
           </div>
 
@@ -125,10 +126,15 @@
                   <div class="cselect-item" data-value="3">3</div>
                   <div class="cselect-item" data-value="4">4</div>
                   <div class="cselect-item" data-value="5">5</div>
+                  <div class="cselect-item" data-value="6">6</div>
+                  <div class="cselect-item" data-value="7">7</div>
+                  <div class="cselect-item" data-value="8">8</div>
+                  <div class="cselect-item" data-value="9">9</div>
+                  <div class="cselect-item" data-value="10">10</div>
                 </div>
               </div>
 
-              <small class="help">Позже можно ограничить выбор мест по людям.</small>
+              <small class="help">Нельзя выбрать мест больше, чем людей.</small>
             </div>
           </div>
         </div>
@@ -157,32 +163,69 @@
     if(!club) goto("clubs.html");
     qs("#clubBadge").textContent = `${city} • ${club.name}`;
 
-    // ------ ZONE CONFIG (разные места) ------
+    // ------ ZONE CONFIG ------
     const ZONE_CONF = {
-      "Общий зал": { prefix:"G", count:24 },
-      "VIP": { prefix:"V", count:8 },
-      "Bootcamp": { prefix:"B", count:8 }
+      "Общий зал": { prefix:"G", count:24, layout:"hall" },
+      "VIP":       { prefix:"V", count:10, layout:"vip"  }, // 5 сверху 5 снизу
+      "Bootcamp":  { prefix:"B", count:10, layout:"vip"  }  // 5 сверху 5 снизу
     };
 
-    // ------ Zone ------
-    let zone = GV.get("zone", null);
-    function setZone(z){
-      zone = z;
-      GV.set("zone", z);
-      qsa("#zones .choice").forEach(x => x.classList.toggle("active", x.dataset.zone === z));
-      // при смене зоны — сброс выбранных мест
-      GV.set("seats", []);
-      selected = new Set();
-      renderSeats();
-      updateSummary();
-    }
-    qs("#zones").addEventListener("click", (e)=>{
-      const card = e.target.closest(".choice");
-      if(card) setZone(card.dataset.zone);
-    });
-    if(zone) setZone(zone);
+    // ------ Calendar (сохраняет date) ------
+    const calendarEl = qs("#calendar");
+    const titleEl = qs("#calTitle");
+    let current = new Date();
 
-    // ------ Custom selects init ------
+    let selectedDate = null;
+    const savedDate = GV.get("date", null);
+    if(savedDate){
+      selectedDate = new Date(savedDate + "T00:00:00");
+      current = new Date(selectedDate);
+    } else {
+      const iso = new Date().toISOString().slice(0,10);
+      selectedDate = new Date(iso + "T00:00:00");
+      GV.set("date", iso);
+    }
+
+    function renderCalendar(){
+      calendarEl.innerHTML = "";
+      const year = current.getFullYear();
+      const month = current.getMonth();
+      const firstDay = new Date(year, month, 1);
+      const lastDay = new Date(year, month + 1, 0);
+      const startDay = (firstDay.getDay() + 6) % 7;
+
+      titleEl.textContent = current.toLocaleString("ru-RU", { month:"long", year:"numeric" });
+
+      for(let i=0;i<startDay;i++) calendarEl.appendChild(document.createElement("div"));
+
+      const today = new Date();
+      const todayMid = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+
+      for(let d=1; d<=lastDay.getDate(); d++){
+        const date = new Date(year, month, d);
+        const el = document.createElement("div");
+        el.className = "cal-day";
+        el.textContent = d;
+
+        if(date < todayMid) el.classList.add("disabled");
+        if(selectedDate && date.toDateString() === selectedDate.toDateString()) el.classList.add("selected");
+
+        el.addEventListener("click", ()=>{
+          selectedDate = date;
+          GV.set("date", date.toISOString().slice(0,10));
+          renderCalendar();
+          renderSeats();          // важно: обновляем занятость по слоту
+          updateSummary();
+        });
+
+        calendarEl.appendChild(el);
+      }
+    }
+
+    qs("#prevMonth").onclick = ()=>{ current.setMonth(current.getMonth()-1); renderCalendar(); };
+    qs("#nextMonth").onclick = ()=>{ current.setMonth(current.getMonth()+1); renderCalendar(); };
+
+    // ------ Custom selects ------
     const peopleHidden = qs("#peopleValue");
     const timeHidden = qs("#timeValue");
 
@@ -195,11 +238,6 @@
     // init people custom select
     const peopleCS = initCustomSelect(qs("#peopleCS"));
     peopleCS.setValue(savedPeople, savedPeople);
-
-    qs("#peopleCS").addEventListener("change", ()=>{
-      GV.set("people", peopleHidden.value);
-      updateSummary();
-    });
 
     // build time options (step 30 min)
     function roundToStep(timeStr, step=30){
@@ -244,15 +282,57 @@
     const timeCS = initCustomSelect(qs("#timeCS"));
     timeCS.setValue(t0, t0);
 
-    qs("#timeCS").addEventListener("change", ()=>{
-      GV.set("time", timeHidden.value);
+    // ------ Zone ------
+    let zone = GV.get("zone", null);
+
+    function setZone(z){
+      zone = z;
+      GV.set("zone", z);
+      qsa("#zones .choice").forEach(x => x.classList.toggle("active", x.dataset.zone === z));
+
+      // при смене зоны — сброс выбранных мест
+      selected = new Set();
+      GV.set("seats", []);
+      renderSeats();
+      updateSummary();
+    }
+
+    qs("#zones").addEventListener("click", (e)=>{
+      const card = e.target.closest(".choice");
+      if(card) setZone(card.dataset.zone);
+    });
+
+    if(zone) setZone(zone);
+
+    // ------ People limit ------
+    function enforcePeopleLimit(){
+      const limit = parseInt(peopleHidden.value || "1", 10);
+      if(selected.size <= limit) return;
+
+      const kept = Array.from(selected).slice(0, limit);
+      selected = new Set(kept);
+      GV.set("seats", kept);
+      renderSeats();
+      updateSummary();
+    }
+
+    qs("#peopleCS").addEventListener("change", ()=>{
+      GV.set("people", peopleHidden.value);
+      enforcePeopleLimit();
+      renderSeats();   // обновим (на всякий)
       updateSummary();
     });
 
-    // ------ Seats (по зоне разные) ------
+    qs("#timeCS").addEventListener("change", ()=>{
+      GV.set("time", timeHidden.value);
+      renderSeats();   // обновляем “занято” по времени
+      updateSummary();
+    });
+
+    // ------ Seats / Busy ------
     const seatsWrap = qs("#seats");
 
-    // busy seats per zone stored by club
+    // demo busy by zone
     let busyByZone = GV.get("busySeatsByZone", null);
     if(!busyByZone){
       busyByZone = {};
@@ -268,7 +348,20 @@
       GV.set("busySeatsByZone", busyByZone);
     }
 
+    // load selected seats
     let selected = new Set(GV.get("seats", []));
+
+    function bookingSlotKey(){
+      const date = GV.get("date");
+      const time = GV.get("time");
+      return `${club.id}|${date}|${time}|${zone}`;
+    }
+
+    function getBookedSeatsForSlot(){
+      if(!zone) return [];
+      const booked = GV.get("bookedSeats", {}); // key -> array
+      return booked[bookingSlotKey()] || [];
+    }
 
     function seatLabel(i){
       const {prefix} = ZONE_CONF[zone];
@@ -277,6 +370,9 @@
 
     function renderSeats(){
       seatsWrap.innerHTML = "";
+
+      seatsWrap.classList.remove("seats--vip","seats--hall");
+
       if(!zone){
         for(let i=1;i<=12;i++){
           const el = document.createElement("div");
@@ -288,19 +384,80 @@
         return;
       }
 
-      const {count} = ZONE_CONF[zone];
-      const busy = new Set(busyByZone[zone] || []);
+      const {count, layout} = ZONE_CONF[zone];
 
+      // применяем нужную сетку
+      if(layout === "vip") seatsWrap.classList.add("seats--vip");
+      if(layout === "hall") seatsWrap.classList.add("seats--hall");
+
+      // занятые: демо busy + реальные брони (по слоту)
+      const busy = new Set((busyByZone[zone] || []).concat(getBookedSeatsForSlot()));
+
+      // общий зал: 3 ряда по 8 мест, между 4 и 5 — проход
+      if(layout === "hall"){
+        let seatNum = 1;
+        for(let row=0; row<3; row++){
+          for(let col=1; col<=9; col++){
+            if(col === 5){
+              const gap = document.createElement("div");
+              gap.className = "seat aisle";
+              seatsWrap.appendChild(gap);
+              continue;
+            }
+
+            const i = seatNum++;
+            const isBusy = busy.has(i);
+
+            const el = document.createElement("div");
+            el.className = "seat" + (isBusy ? " busy" : "") + (selected.has(i) ? " selected" : "");
+            el.textContent = seatLabel(i);
+
+            el.addEventListener("click", ()=>{
+              if(isBusy) return;
+
+              if(selected.has(i)){
+                selected.delete(i);
+              } else {
+                const limit = parseInt(peopleHidden.value || "1", 10);
+                if(selected.size >= limit){
+                  alert(`Нельзя выбрать больше мест, чем людей (${limit}).`);
+                  return;
+                }
+                selected.add(i);
+              }
+
+              GV.set("seats", Array.from(selected));
+              renderSeats();
+              updateSummary();
+            });
+
+            seatsWrap.appendChild(el);
+          }
+        }
+        return;
+      }
+
+      // VIP/Bootcamp: 10 мест, 5x2
       for(let i=1;i<=count;i++){
         const isBusy = busy.has(i);
+
         const el = document.createElement("div");
         el.className = "seat" + (isBusy ? " busy" : "") + (selected.has(i) ? " selected" : "");
         el.textContent = seatLabel(i);
 
         el.addEventListener("click", ()=>{
           if(isBusy) return;
-          if(selected.has(i)) selected.delete(i);
-          else selected.add(i);
+
+          if(selected.has(i)){
+            selected.delete(i);
+          } else {
+            const limit = parseInt(peopleHidden.value || "1", 10);
+            if(selected.size >= limit){
+              alert(`Нельзя выбрать больше мест, чем людей (${limit}).`);
+              return;
+            }
+            selected.add(i);
+          }
 
           GV.set("seats", Array.from(selected));
           renderSeats();
@@ -317,60 +474,6 @@
       renderSeats();
       updateSummary();
     });
-
-    // ------ Calendar ------
-    const calendarEl = qs("#calendar");
-    const titleEl = qs("#calTitle");
-    let current = new Date();
-
-    let selectedDate = null;
-    const savedDate = GV.get("date", null);
-    if(savedDate){
-      selectedDate = new Date(savedDate + "T00:00:00");
-      current = new Date(selectedDate);
-    } else {
-      const iso = new Date().toISOString().slice(0,10);
-      selectedDate = new Date(iso + "T00:00:00");
-      GV.set("date", iso);
-    }
-
-    function renderCalendar(){
-      calendarEl.innerHTML = "";
-      const year = current.getFullYear();
-      const month = current.getMonth();
-      const firstDay = new Date(year, month, 1);
-      const lastDay = new Date(year, month + 1, 0);
-      const startDay = (firstDay.getDay() + 6) % 7;
-
-      titleEl.textContent = current.toLocaleString("ru-RU", { month:"long", year:"numeric" });
-
-      for(let i=0;i<startDay;i++) calendarEl.appendChild(document.createElement("div"));
-
-      const today = new Date();
-      const todayMid = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-
-      for(let d=1; d<=lastDay.getDate(); d++){
-        const date = new Date(year, month, d);
-        const el = document.createElement("div");
-        el.className = "cal-day";
-        el.textContent = d;
-
-        if(date < todayMid) el.classList.add("disabled");
-        if(selectedDate && date.toDateString() === selectedDate.toDateString()) el.classList.add("selected");
-
-        el.addEventListener("click", ()=>{
-          selectedDate = date;
-          GV.set("date", date.toISOString().slice(0,10));
-          renderCalendar();
-          updateSummary();
-        });
-
-        calendarEl.appendChild(el);
-      }
-    }
-
-    qs("#prevMonth").onclick = ()=>{ current.setMonth(current.getMonth()-1); renderCalendar(); };
-    qs("#nextMonth").onclick = ()=>{ current.setMonth(current.getMonth()+1); renderCalendar(); };
 
     // ------ Summary ------
     function updateSummary(){
@@ -397,13 +500,17 @@
         return;
       }
 
-      top.textContent = `Зона: ${zone} • Мест: ${seatsCount}`;
+      // если вдруг людей уменьшили — подрежем
+      enforcePeopleLimit();
+
+      top.textContent = `Зона: ${zone} • Мест: ${selected.size}`;
       sub.textContent = `${when} • Людей: ${ppl}`;
       next.disabled = false;
     }
 
-    renderSeats();
+    // init
     renderCalendar();
+    renderSeats();
     updateSummary();
 
     qs("#next").addEventListener("click", ()=>goto("packages.html"));

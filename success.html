@@ -51,6 +51,15 @@
       goto("index.html");
     }
 
+    // ✅ фиксируем бронь: места становятся занятыми на этот слот (клуб+дата+время+зона)
+    const booked = GV.get("bookedSeats", {});
+    const key = `${club.id}|${date}|${time}|${zone}`;
+
+    const prev = new Set(booked[key] || []);
+    seats.forEach(s => prev.add(s));
+    booked[key] = Array.from(prev);
+    GV.set("bookedSeats", booked);
+
     const code = "VS-" + Math.random().toString(16).slice(2,8).toUpperCase();
     qs("#info").textContent = `Бронь подтверждена. Код брони: ${code}`;
 
